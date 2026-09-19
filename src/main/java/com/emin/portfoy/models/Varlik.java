@@ -1,11 +1,30 @@
 package com.emin.portfoy.models;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "varliklar")
 public class Varlik {
 
-    private int id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, unique = true)
     private String sembol;
+
+    @Column(nullable = false)
     private double miktar;
+
+    @Column(nullable = false)
     private double ortalamaMaliyet;
+
+    @Column(nullable = false)
     private double guncelFiyat;
 
     public Varlik() {
@@ -18,12 +37,12 @@ public class Varlik {
         setGuncelFiyat(guncelFiyat);
     }
 
-    public int getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(int id) {
-        if (id < 0) {
+    public void setId(Long id) {
+        if (id != null && id < 0) {
             throw new IllegalArgumentException("id eksi olamaz");
         }
         this.id = id;
