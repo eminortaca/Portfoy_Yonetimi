@@ -3,46 +3,87 @@ package com.emin.portfoy.models;
 public class Varlik {
 
     private int id;
-    private String sembol;          // Örn: "THYAO", "TLY", "XAUUSD"
-    private double miktar;          // Kaç lot/adet alındığı
-    private double ortalamaMaliyet; // Alış fiyatı
-    private double guncelFiyat;     // Şu anki piyasa değeri
+    private String sembol;
+    private double miktar;
+    private double ortalamaMaliyet;
+    private double guncelFiyat;
 
-    public Varlik() {}
+    public Varlik() {
+    }
 
     public Varlik(String sembol, double miktar, double ortalamaMaliyet, double guncelFiyat) {
-        this.sembol = sembol;
+        setSembol(sembol);
+        setMiktar(miktar);
+        setOrtalamaMaliyet(ortalamaMaliyet);
+        setGuncelFiyat(guncelFiyat);
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        if (id < 0) {
+            throw new IllegalArgumentException("id eksi olamaz");
+        }
+        this.id = id;
+    }
+
+    public String getSembol() {
+        return sembol;
+    }
+
+    public void setSembol(String sembol) {
+        if (sembol == null || sembol.trim().isEmpty()) {
+            throw new IllegalArgumentException("sembol boş olamaz");
+        }
+        this.sembol = sembol.trim().toUpperCase();
+    }
+
+    public double getMiktar() {
+        return miktar;
+    }
+
+    public void setMiktar(double miktar) {
+        if (miktar <= 0) {
+            throw new IllegalArgumentException("miktar sıfırdan büyük olmalıdır");
+        }
         this.miktar = miktar;
+    }
+
+    public double getOrtalamaMaliyet() {
+        return ortalamaMaliyet;
+    }
+
+    public void setOrtalamaMaliyet(double ortalamaMaliyet) {
+        if (ortalamaMaliyet < 0) {
+            throw new IllegalArgumentException("ortalama maliyet eksi olamaz");
+        }
         this.ortalamaMaliyet = ortalamaMaliyet;
+    }
+
+    public double getGuncelFiyat() {
+        return guncelFiyat;
+    }
+
+    public void setGuncelFiyat(double guncelFiyat) {
+        if (guncelFiyat < 0) {
+            throw new IllegalArgumentException("güncel fiyat eksi olamaz");
+        }
         this.guncelFiyat = guncelFiyat;
     }
 
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
-
-    public String getSembol() { return sembol; }
-    public void setSembol(String sembol) { this.sembol = sembol; }
-
-    public double getMiktar() { return miktar; }
-
-    public void setMiktar(double miktar) {
-        if (miktar >= 0) {
-            this.miktar = miktar;
-        } else {
-            System.out.println("Hata: Miktar eksi olamaz!");
-        }
-    }
-
-    public double getOrtalamaMaliyet() { return ortalamaMaliyet; }
-    public void setOrtalamaMaliyet(double ortalamaMaliyet) { this.ortalamaMaliyet = ortalamaMaliyet; }
-
-    public double getGuncelFiyat() { return guncelFiyat; }
-    public void setGuncelFiyat(double guncelFiyat) { this.guncelFiyat = guncelFiyat; }
-
-    // Kâr/Zarar Hesaplama Metodu (Business kuralı - Read Only)
     public double getKarZararDurumu() {
         double toplamMaliyet = this.miktar * this.ortalamaMaliyet;
         double toplamGuncelDeger = this.miktar * this.guncelFiyat;
         return toplamGuncelDeger - toplamMaliyet;
+    }
+
+    public double getToplamMaliyet() {
+        return this.miktar * this.ortalamaMaliyet;
+    }
+
+    public double getToplamDeger() {
+        return this.miktar * this.guncelFiyat;
     }
 }
