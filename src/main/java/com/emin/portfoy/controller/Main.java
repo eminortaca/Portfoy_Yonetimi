@@ -1,30 +1,42 @@
 package com.emin.portfoy.controller;
 
 import com.emin.portfoy.models.Varlik;
-import com.emin.portfoy.repository.VarlikRepository;
 import com.emin.portfoy.service.PortfoyService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.List;
 
+@RestController
+@RequestMapping("/api/varliklar")
 public class Main {
 
-    private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
+    private final PortfoyService portfoyService;
 
-    public static void main(String[] args) {
-        PortfoyService portfoyService = new PortfoyService(new VarlikRepository());
+    public Main(PortfoyService portfoyService) {
+        this.portfoyService = portfoyService;
+    }
 
-        try {
-            portfoyService.varlikEkle(new Varlik("THYAO", 10, 250.5, 275.75));
-            portfoyService.varlikEkle(new Varlik("XAUUSD", 2, 2300.0, 2350.5));
+    @PostMapping
+    public ResponseEntity<Void> varlikEkle(@RequestBody Varlik varlik) {
+        portfoyService.varlikEkle(varlik);
+        return ResponseEntity.ok().build();
+    }
 
-            System.out.println("Toplam Maliyet: " + portfoyService.toplamMaliyet());
-            System.out.println("Toplam Değer: " + portfoyService.toplamDeger());
-            System.out.println("Toplam Kar/Zarar: " + portfoyService.toplamKarZarar());
-        } catch (IllegalArgumentException ex) {
-            LOGGER.log(Level.SEVERE, "İşlem hatası: {0}", ex.getMessage());
-        } catch (Exception ex) {
-            LOGGER.log(Level.SEVERE, "Beklenmeyen hata", ex);
-        }
+    @GetMapping
+    public ResponseEntity<List<Varlik>> varliklariListele() {
+        return ResponseEntity.ok(portfoyService.tumVarliklar());
+    }
+
+    @DeleteMapping("/{sembol}")
+    public ResponseEntity<Void> varlikSil(@PathVariable String sembol) {
+        portfoyService.varlikSil(sembol);
+        return ResponseEntity.noContent().build();
     }
 }
