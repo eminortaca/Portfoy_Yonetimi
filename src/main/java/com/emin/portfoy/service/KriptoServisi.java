@@ -9,30 +9,30 @@ import java.net.http.HttpResponse;
 
 public class KriptoServisi {
 
-    public void bitcoinFiyatiniGetir() {
-        try {
-            // Binance herkese açık, ücretsiz fiyat API'si
-            String url = "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT";
+    private final HttpClient client = HttpClient.newHttpClient();
 
-            // İstek (Request) oluşturma
-            HttpClient client = HttpClient.newHttpClient();
+    public double guncelFiyatGetir(String sembol) {
+        try {
+            // Gelen sembolü Binance formatına çeviriyoruz (Örn: BTC -> BTCUSDT)
+            String pair = sembol.toUpperCase().endsWith("USDT") ? sembol.toUpperCase() : sembol.toUpperCase() + "USDT";
+            String url = "https://api.binance.com/api/v3/ticker/price?symbol=" + pair;
+
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .GET()
                     .build();
 
-            // İsteği gönderip yanıtı (Response) alma
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            // Dönen ham JSON metnini ayrıştırma (Parse işlemi)
-            JsonObject jsonNesnesi = JsonParser.parseString(response.body()).getAsJsonObject();
-            String sembol = jsonNesnesi.get("symbol").getAsString();
-            String fiyat = jsonNesnesi.get("price").getAsString();
-
-            System.out.println("Canlı Kripto Verisi -> Sembol: " + sembol + ", Fiyat: " + fiyat);
-
+            if (response.statusCode() == 200) {
+                JsonObject jsonNesnesi = JsonParser.parseString(response.body()).getAsJsonObject();
+                return jsonNesnesi.get("price").getAsDouble();
+            } else {
+                System.out.println("API Hatası: " + response.statusCode());
+            }
         } catch (Exception e) {
-            System.out.println("Veri çekilirken bir sorun yaşandı: " + e.getMessage());
+            System.out.println("Fiyat çekilemedi (" + sembol + "): " + e.getMessage());
         }
+        return 0.0;
     }
 }
