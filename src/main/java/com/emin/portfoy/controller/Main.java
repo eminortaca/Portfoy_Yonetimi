@@ -31,6 +31,7 @@ public class Main {
             System.out.println("Toplam Maliyet: " + portfoyService.toplamMaliyet());
             System.out.println("Toplam Değer: " + portfoyService.toplamDeger());
             System.out.println("Toplam Kar/Zarar: " + portfoyService.toplamKarZarar());
+            System.out.println("yazdırma bitti:");
 
         } catch (IllegalArgumentException ex) {
             LOGGER.log(Level.SEVERE, "İşlem hatası: {0}", ex.getMessage());
@@ -39,4 +40,3 @@ public class Main {
         }
     }
 }
-// commit denemesi 4
