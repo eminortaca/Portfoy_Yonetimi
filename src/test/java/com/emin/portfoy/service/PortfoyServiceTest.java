@@ -24,6 +24,8 @@ class PortfoyServiceTest {
     void olmayanVarliktaFiyatGuncellemeHatasiVerir() {
         PortfoyService service = new PortfoyService(new VarlikRepository(), new KriptoServisi());
         assertThrows(IllegalArgumentException.class, () -> service.varlikFiyatiGuncelle("ABC", 10));
+        System.out.println("Olan olmayan varlıkta fiyat güncelleme hatası testi geçti.");
+        System.out.println("bu sadece test senaryosu.");
     }
 }
 
