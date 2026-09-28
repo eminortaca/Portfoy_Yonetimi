@@ -13,8 +13,7 @@ public class Main {
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
 
     public static void main(String[] args) {
-        PortfoyService portfoyService = new PortfoyService(new VarlikRepository());
-
+        PortfoyService portfoyService = new PortfoyService(new VarlikRepository(), KRIPTO_SERVISI);
         try {
             // 1. Binance'ten anlık BTC fiyatını çekip bir değişkene atıyoruz
             double btcGuncelFiyat = KRIPTO_SERVISI.guncelFiyatGetir("BTC");

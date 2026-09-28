@@ -8,15 +8,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class PortfoyService {
-
+    private final KriptoServisi kriptoServisi;
     private static final Logger LOGGER = Logger.getLogger(PortfoyService.class.getName());
     private final VarlikRepository varlikRepository;
 
-    public PortfoyService(VarlikRepository varlikRepository) {
-        if (varlikRepository == null) {
-            throw new IllegalArgumentException("repository boş olamaz");
-        }
+    // Bağımlılıkları (Dependencies) içeri alıyoruz
+    public PortfoyService(VarlikRepository varlikRepository, KriptoServisi kriptoServisi) {
         this.varlikRepository = varlikRepository;
+        this.kriptoServisi = kriptoServisi;
     }
 
     public void varlikEkle(Varlik varlik) {
@@ -49,5 +48,25 @@ public class PortfoyService {
 
     public double toplamKarZarar() {
         return toplamDeger() - toplamMaliyet();
+    }
+
+    // Canlı piyasa verilerini çekip hafızadaki varlıkları tazeleyen metot
+    public void piyasaFiyatlariniGuncelle() {
+        // tumunuGetir() yerine findAll() kullanıyoruz
+        List<Varlik> varliklar = varlikRepository.findAll();
+
+        for (Varlik varlik : varliklar) {
+            // Şimdilik BTC ve ETH için Binance sorgusu atıyoruz
+            if (varlik.getSembol().equalsIgnoreCase("BTC") || varlik.getSembol().equalsIgnoreCase("ETH")) {
+
+                double canliFiyat = kriptoServisi.guncelFiyatGetir(varlik.getSembol());
+
+                if (canliFiyat > 0.0) {
+                    varlik.setGuncelFiyat(canliFiyat);
+                    varlikRepository.guncelle(varlik);
+                    LOGGER.log(Level.INFO, "Piyasa fiyatı güncellendi ({0}): {1}", new Object[]{varlik.getSembol(), canliFiyat});
+                }
+            }
+        }
     }
 }

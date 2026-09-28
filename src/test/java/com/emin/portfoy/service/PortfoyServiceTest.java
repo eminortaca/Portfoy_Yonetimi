@@ -11,7 +11,7 @@ class PortfoyServiceTest {
 
     @Test
     void toplamlarDogruHesaplanir() {
-        PortfoyService service = new PortfoyService(new VarlikRepository());
+        PortfoyService service = new PortfoyService(new VarlikRepository(), new KriptoServisi());
         service.varlikEkle(new Varlik("THYAO", 10, 100, 120));
         service.varlikEkle(new Varlik("XAUUSD", 1, 2000, 2200));
 
@@ -22,7 +22,7 @@ class PortfoyServiceTest {
 
     @Test
     void olmayanVarliktaFiyatGuncellemeHatasiVerir() {
-        PortfoyService service = new PortfoyService(new VarlikRepository());
+        PortfoyService service = new PortfoyService(new VarlikRepository(), new KriptoServisi());
         assertThrows(IllegalArgumentException.class, () -> service.varlikFiyatiGuncelle("ABC", 10));
     }
 }

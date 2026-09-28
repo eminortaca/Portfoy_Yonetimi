@@ -9,7 +9,9 @@ import java.net.http.HttpResponse;
 
 public class KriptoServisi {
 
-    private final HttpClient client = HttpClient.newHttpClient();
+    private final HttpClient client = HttpClient.newBuilder()
+            .version(HttpClient.Version.HTTP_1_1) // yurtta internet sıkıntı olduğu için HTTP/1.1 kullanıyoruz
+            .build();
 
     public double guncelFiyatGetir(String sembol) {
         try {
