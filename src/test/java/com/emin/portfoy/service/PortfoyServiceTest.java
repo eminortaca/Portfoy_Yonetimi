@@ -26,3 +26,5 @@ class PortfoyServiceTest {
         assertThrows(IllegalArgumentException.class, () -> service.varlikFiyatiGuncelle("ABC", 10));
     }
 }
+
+// Bu test sınıfı, PortfoyService'in temel işlevlerini test eder.ama artık kullanılmıyor.
