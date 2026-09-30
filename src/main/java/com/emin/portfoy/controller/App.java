@@ -70,25 +70,23 @@ public class App extends Application {
     private void tabloOlustur() {
         TableColumn<Varlik, String> colSembol = new TableColumn<>("Sembol");
         colSembol.setCellValueFactory(new PropertyValueFactory<>("sembol"));
-        colSembol.setPrefWidth(120);
 
         TableColumn<Varlik, Double> colMiktar = new TableColumn<>("Miktar");
         colMiktar.setCellValueFactory(new PropertyValueFactory<>("miktar"));
-        colMiktar.setPrefWidth(100);
 
         TableColumn<Varlik, Double> colMaliyet = new TableColumn<>("Ort. Maliyet");
         colMaliyet.setCellValueFactory(new PropertyValueFactory<>("ortalamaMaliyet"));
-        colMaliyet.setPrefWidth(130);
 
         TableColumn<Varlik, Double> colGuncelFiyat = new TableColumn<>("Güncel Fiyat");
         colGuncelFiyat.setCellValueFactory(new PropertyValueFactory<>("guncelFiyat"));
-        colGuncelFiyat.setPrefWidth(130);
 
         TableColumn<Varlik, Double> colToplamDeger = new TableColumn<>("Toplam Değer");
         colToplamDeger.setCellValueFactory(new PropertyValueFactory<>("toplamDeger"));
-        colToplamDeger.setPrefWidth(130);
 
         tablo.getColumns().addAll(colSembol, colMiktar, colMaliyet, colGuncelFiyat, colToplamDeger);
+
+        // Boş gri sütunu yok eder, sütunları pencere genişliğine eşit ve orantılı yayar:
+        tablo.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
     }
 
     private HBox ozetPaneliOlustur() {
