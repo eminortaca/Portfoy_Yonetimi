@@ -6,23 +6,23 @@ Java 21 ve JavaFX kullanılarak geliştirilmiş, N-Tier (Katmanlı) mimariye sah
 
 ## ✨ Özellikler
 
-* **Masaüstü Kullanıcı Arayüzü (JavaFX):** Temiz, duyarlı ve anlık portföy durumunu özetleyen masaüstü tablosu.
+* **Masaüstü Kullanıcı Arayüzü (JavaFX):** Anlık portföy durumunu, maliyetleri ve güncel piyasa değerlerini listeleyen duyarlı masaüstü tablosu.
 * **Kalıcı Veri Saklama (SQLite):** Varlıkların (`sembol`, `miktar`, `ortalama_maliyet`, `guncel_fiyat`) yerel `portfoy.db` veritabanında saklanması ve otomatik senkronizasyonu.
 * **Canlı Piyasa Fiyatları (REST API):** Binance Public REST API entegrasyonu (`HttpClient` + Google Gson) ile anlık kripto fiyat güncellemesi.
 * **Dinamik Portföy Analizi:** Toplam yatırım maliyeti, anlık portföy değeri ve kâr/zarar farkının otomatik hesaplanması.
-* **Katmanlı Mimari (N-Tier Architecture):** Model, Repository, Service ve Controller katmanlarının bağımsızlığı ve temiz kod (Clean Code) standartları.
-* **Birim Testleri (Unit Tests):** Servis ve matematiksel hesaplama katmanının JUnit 5 ile otomatik doğrulanması.
+* **Katmanlı Mimari (N-Tier Architecture):** Model, Repository, Service ve Controller katmanlarının sorumluluk ayrımı.
+* **Birim Testleri (Unit Tests):** Model ve iş mantığı katmanlarının JUnit 5 ile test edilmesi.
 
 ---
 
 ## 🛠 Kullanılan Teknolojiler
 
 * **Java 21 LTS**
-* **JavaFX 21** (Masaüstü Arayüzü & TableView)
-* **SQLite & JDBC** (Yerel İlişkisel Veritabanı)
-* **Java 11+ HttpClient & Google Gson** (Asenkron/Senkron REST API ve JSON Ayrıştırma)
+* **JavaFX 21** (Masaüstü Kullanıcı Arayüzü)
+* **SQLite & JDBC** (Yerel Veri Saklama)
+* **Java 11+ HttpClient & Google Gson** (REST API ve JSON İşleme)
 * **Apache Maven** (Bağımlılık ve Derleme Yönetimi)
-* **JUnit 5** (Otomatik Birim Testleri)
+* **JUnit 5** (Birim Testleri)
 
 ---
 
@@ -31,9 +31,19 @@ Java 21 ve JavaFX kullanılarak geliştirilmiş, N-Tier (Katmanlı) mimariye sah
 ```text
 src/
 ├── main/java/com/emin/portfoy/
-│   ├── controller/      # Arayüz denetleyicileri ve başlatıcılar (App, Launcher, Main)
-│   ├── models/          # Veri modelleri (Varlik POJO)
-│   ├── repository/      # SQLite CRUD ve veri erişim katmanı (VarlikRepository)
-│   └── service/         # İş mantığı ve Binance istemcisi (PortfoyService, KriptoServisi)
+│   ├── controller/
+│   │   ├── App.java          # JavaFX Arayüz Bileşenleri ve Tablo Yönetimi
+│   │   ├── Launcher.java     # JavaFX Modül Uyumluluğu Başlatıcısı
+│   │   └── Main.java         # Konsol Tabanlı Test / Demo Giriş Noktası
+│   ├── models/
+│   │   └── Varlik.java       # Temel Varlık Modeli (POJO)
+│   ├── repository/
+│   │   └── VarlikRepository.java # SQLite CRUD ve Tablo İşlemleri
+│   └── service/
+│       ├── KriptoServisi.java    # Binance REST API İstemcisi
+│       └── PortfoyService.java   # Portföy Hesaplamaları ve İş Mantığı
 └── test/java/com/emin/portfoy/
-    └── service/         # Birim testleri (PortfoyServiceTest)
+    ├── models/
+    │   └── VarlikTest.java       # Model Doğrulama Testleri
+    └── service/
+        └── PortfoyServiceTest.java # Servis ve Hesaplama Birim Testleri
