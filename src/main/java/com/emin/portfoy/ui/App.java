@@ -1,10 +1,11 @@
-package com.emin.portfoy.controller;
+package com.emin.portfoy.ui; // Paketi 'ui' olarak güncellediğimizi varsayarak değiştirdik
 
 import com.emin.portfoy.models.Varlik;
 import com.emin.portfoy.repository.VarlikRepository;
 import com.emin.portfoy.service.KriptoServisi;
 import com.emin.portfoy.service.PortfoyService;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -14,8 +15,11 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class App extends Application {
 
@@ -26,6 +30,9 @@ public class App extends Application {
     private Label lblToplamMaliyet;
     private Label lblToplamDeger;
     private Label lblKarZarar;
+
+    // Otomatik güncelleme için zamanlayıcı (Background Worker)
+    private ScheduledExecutorService zamanlayici;
 
     @Override
     public void start(Stage primaryStage) {
@@ -41,17 +48,12 @@ public class App extends Application {
         // 3. Alt Özet Paneli (Toplam Değerler)
         HBox ozetPaneli = ozetPaneliOlustur();
 
-        // 4. Üst Buton Paneli (Fiyat Güncelle Butonu)
-        Button btnGuncelle = new Button("Piyasa Fiyatlarını Güncelle");
-        btnGuncelle.setStyle("-fx-background-color: #2b5797; -fx-text-fill: white; -fx-font-weight: bold;");
-        btnGuncelle.setOnAction(e -> {
-            portfoyService.piyasaFiyatlariniGuncelle();
-            verileriYenile();
-        });
-
-        HBox ustPanel = new HBox(btnGuncelle);
+        // 4. Üst Panel (Butonu kaldırıp yerine bilgi mesajı koyduk)
+        Label lblBilgi = new Label("Piyasa fiyatları her 3 saniyede bir otomatik güncellenmektedir.");
+        lblBilgi.setStyle("-fx-font-style: italic; -fx-text-fill: #666666;");
+        HBox ustPanel = new HBox(lblBilgi);
         ustPanel.setPadding(new Insets(10));
-        ustPanel.setAlignment(Pos.CENTER_RIGHT);
+        ustPanel.setAlignment(Pos.CENTER);
 
         // 5. Ana Düzen (BorderPane)
         BorderPane root = new BorderPane();
@@ -65,6 +67,9 @@ public class App extends Application {
         Scene scene = new Scene(root, 750, 450);
         primaryStage.setScene(scene);
         primaryStage.show();
+
+        // 6. Uygulama ekranda göründüğü an otomatik döngüyü başlat
+        otomatikGuncellemeyiBaslat();
     }
 
     private void tabloOlustur() {
@@ -118,6 +123,34 @@ public class App extends Application {
             lblKarZarar.setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
         } else {
             lblKarZarar.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+        }
+    }
+
+    private void otomatikGuncellemeyiBaslat() {
+        // Sadece bu iş için arka planda 1 adet işçi oluşturuyoruz
+        zamanlayici = Executors.newSingleThreadScheduledExecutor();
+
+        // İşçiye görevini ve süresini veriyoruz
+        zamanlayici.scheduleAtFixedRate(() -> {
+
+            // 1. ADIM: Arka planda Binance'e gidip fiyatları çek (UI donmaz)
+            portfoyService.piyasaFiyatlariniGuncelle();
+
+            // 2. ADIM: Fiyatlar geldiğinde, arayüzü güncellemek için ana UI Thread'e haber ver
+            Platform.runLater(() -> {
+                verileriYenile(); // Tablodaki rakamlar yenilenir
+            });
+
+        }, 0, 3, TimeUnit.SECONDS);
+        // 0: Hemen başla, 3: Her 3 saniyede bir tekrarla
+    }
+
+    // Kullanıcı pencereyi (X) çarpıdan kapattığında arka plandaki döngüyü tamamen durdur
+    @Override
+    public void stop() throws Exception {
+        super.stop();
+        if (zamanlayici != null && !zamanlayici.isShutdown()) {
+            zamanlayici.shutdown();
         }
     }
 

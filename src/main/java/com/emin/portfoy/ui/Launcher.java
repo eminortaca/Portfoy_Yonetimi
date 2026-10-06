@@ -1,4 +1,4 @@
-package com.emin.portfoy.controller;
+package com.emin.portfoy.ui;
 
 public class Launcher {
     public static void main(String[] args) {
