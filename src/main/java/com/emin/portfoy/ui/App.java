@@ -21,8 +21,6 @@ public class App extends Application {
 
     private PortfoyService portfoyService;
     private TableView<Varlik> tablo;
-    private ObservableList<Varlik> varlikListesi;
-
     private Label lblToplamMaliyet;
     private Label lblToplamDeger;
     private Label lblKarZarar;
@@ -56,11 +54,7 @@ public class App extends Application {
         primaryStage.show();
 
         // Zamanlayıcı metodunu silip, servise "başla" dedik.
-        portfoyService.otomatikGuncellemeyiBaslat(() -> {
-            Platform.runLater(() -> {
-                verileriYenile();
-            });
-        });
+        portfoyService.otomatikGuncellemeyiBaslat(() -> Platform.runLater(this::verileriYenile));
     }
 
     private void tabloOlustur() {
@@ -79,8 +73,12 @@ public class App extends Application {
         TableColumn<Varlik, Double> colToplamDeger = new TableColumn<>("Toplam Değer");
         colToplamDeger.setCellValueFactory(new PropertyValueFactory<>("toplamDeger"));
 
-        tablo.getColumns().addAll(colSembol, colMiktar, colMaliyet, colGuncelFiyat, colToplamDeger);
-        tablo.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tablo.getColumns().add(colSembol);
+        tablo.getColumns().add(colMiktar);
+        tablo.getColumns().add(colMaliyet);
+        tablo.getColumns().add(colGuncelFiyat);
+        tablo.getColumns().add(colToplamDeger);
+        tablo.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
     }
 
     private HBox ozetPaneliOlustur() {
@@ -100,9 +98,8 @@ public class App extends Application {
     }
 
     private void verileriYenile() {
-        varlikListesi = FXCollections.observableArrayList(portfoyService.tumVarliklar());
+        ObservableList<Varlik> varlikListesi = FXCollections.observableArrayList(portfoyService.tumVarliklar());
         tablo.setItems(varlikListesi);
-
         lblToplamMaliyet.setText(String.format("Toplam Maliyet: %.2f", portfoyService.toplamMaliyet()));
         lblToplamDeger.setText(String.format("Toplam Değer: %.2f", portfoyService.toplamDeger()));
 
