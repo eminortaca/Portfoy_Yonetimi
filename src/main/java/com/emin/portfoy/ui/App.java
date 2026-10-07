@@ -2,6 +2,7 @@ package com.emin.portfoy.ui;
 
 import com.emin.portfoy.models.Varlik;
 import com.emin.portfoy.repository.VarlikRepository;
+import com.emin.portfoy.repository.DatabaseManager;
 import com.emin.portfoy.service.KriptoServisi;
 import com.emin.portfoy.service.PortfoyService;
 import javafx.application.Application;
@@ -117,6 +118,7 @@ public class App extends Application {
     public void stop() throws Exception {
         super.stop();
         portfoyService.otomatikGuncellemeyiDurdur();
+        DatabaseManager.baglantiyiKapat();
     }
 
     public static void main(String[] args) {

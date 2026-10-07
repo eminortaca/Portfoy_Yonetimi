@@ -8,14 +8,11 @@ import java.util.List;
 import java.util.Optional;
 
 public class VarlikRepository {
-    private static final String DB_URL = "jdbc:sqlite:portfoy.db";
+
+    // DB_URL ve baglantiAl() metodunu sildik, çünkü artık DatabaseManager kullanıyoruz.
 
     public VarlikRepository() {
         tabloOlustur();
-    }
-
-    private Connection baglantiAl() throws SQLException {
-        return DriverManager.getConnection(DB_URL);
     }
 
     private void tabloOlustur() {
@@ -29,8 +26,8 @@ public class VarlikRepository {
             );
             """;
 
-        try (Connection conn = baglantiAl();
-             Statement stmt = conn.createStatement()) {
+        // Sadece Statement nesnesini try içine alıyoruz. Bağlantıyı DatabaseManager'dan istiyoruz.
+        try (Statement stmt = DatabaseManager.getBaglanti().createStatement()) {
             stmt.execute(sql);
         } catch (SQLException e) {
             throw new RuntimeException("Veritabanı tablosu oluşturulamadı: " + e.getMessage(), e);
@@ -47,8 +44,7 @@ public class VarlikRepository {
                 guncel_fiyat = excluded.guncel_fiyat;
             """;
 
-        try (Connection conn = baglantiAl();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement pstmt = DatabaseManager.getBaglanti().prepareStatement(sql)) {
             pstmt.setString(1, varlik.getSembol());
             pstmt.setDouble(2, varlik.getMiktar());
             pstmt.setDouble(3, varlik.getOrtalamaMaliyet());
@@ -66,8 +62,7 @@ public class VarlikRepository {
     public Optional<Varlik> findBySembol(String sembol) {
         String sql = "SELECT * FROM varliklar WHERE sembol = ?";
 
-        try (Connection conn = baglantiAl();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement pstmt = DatabaseManager.getBaglanti().prepareStatement(sql)) {
             pstmt.setString(1, sembol);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
@@ -91,8 +86,7 @@ public class VarlikRepository {
         List<Varlik> liste = new ArrayList<>();
         String sql = "SELECT * FROM varliklar";
 
-        try (Connection conn = baglantiAl();
-             Statement stmt = conn.createStatement();
+        try (Statement stmt = DatabaseManager.getBaglanti().createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
@@ -114,8 +108,7 @@ public class VarlikRepository {
     public void delete(String sembol) {
         String sql = "DELETE FROM varliklar WHERE sembol = ?";
 
-        try (Connection conn = baglantiAl();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement pstmt = DatabaseManager.getBaglanti().prepareStatement(sql)) {
             pstmt.setString(1, sembol);
             pstmt.executeUpdate();
         } catch (SQLException e) {
