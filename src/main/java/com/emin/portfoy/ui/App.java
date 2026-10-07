@@ -1,4 +1,4 @@
-package com.emin.portfoy.ui; // Paketi 'ui' olarak güncellediğimizi varsayarak değiştirdik
+package com.emin.portfoy.ui;
 
 import com.emin.portfoy.models.Varlik;
 import com.emin.portfoy.repository.VarlikRepository;
@@ -17,10 +17,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 public class App extends Application {
 
     private PortfoyService portfoyService;
@@ -31,45 +27,40 @@ public class App extends Application {
     private Label lblToplamDeger;
     private Label lblKarZarar;
 
-    // Otomatik güncelleme için zamanlayıcı (Background Worker)
-    private ScheduledExecutorService zamanlayici;
-
     @Override
     public void start(Stage primaryStage) {
-        // 1. Servisleri ve Veritabanını Başlat
         portfoyService = new PortfoyService(new VarlikRepository(), new KriptoServisi());
 
         primaryStage.setTitle("Portföy Yönetim Sistemi");
 
-        // 2. Tabloyu Hazırla
         tablo = new TableView<>();
         tabloOlustur();
 
-        // 3. Alt Özet Paneli (Toplam Değerler)
         HBox ozetPaneli = ozetPaneliOlustur();
 
-        // 4. Üst Panel (Butonu kaldırıp yerine bilgi mesajı koyduk)
         Label lblBilgi = new Label("Piyasa fiyatları her 3 saniyede bir otomatik güncellenmektedir.");
         lblBilgi.setStyle("-fx-font-style: italic; -fx-text-fill: #666666;");
         HBox ustPanel = new HBox(lblBilgi);
         ustPanel.setPadding(new Insets(10));
         ustPanel.setAlignment(Pos.CENTER);
 
-        // 5. Ana Düzen (BorderPane)
         BorderPane root = new BorderPane();
         root.setTop(ustPanel);
         root.setCenter(tablo);
         root.setBottom(ozetPaneli);
 
-        // Veritabanındaki ilk verileri yükle
         verileriYenile();
 
         Scene scene = new Scene(root, 750, 450);
         primaryStage.setScene(scene);
         primaryStage.show();
 
-        // 6. Uygulama ekranda göründüğü an otomatik döngüyü başlat
-        otomatikGuncellemeyiBaslat();
+        // Zamanlayıcı metodunu silip, servise "başla" dedik.
+        portfoyService.otomatikGuncellemeyiBaslat(() -> {
+            Platform.runLater(() -> {
+                verileriYenile();
+            });
+        });
     }
 
     private void tabloOlustur() {
@@ -89,8 +80,6 @@ public class App extends Application {
         colToplamDeger.setCellValueFactory(new PropertyValueFactory<>("toplamDeger"));
 
         tablo.getColumns().addAll(colSembol, colMiktar, colMaliyet, colGuncelFiyat, colToplamDeger);
-
-        // Boş gri sütunu yok eder, sütunları pencere genişliğine eşit ve orantılı yayar:
         tablo.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
     }
 
@@ -126,32 +115,11 @@ public class App extends Application {
         }
     }
 
-    private void otomatikGuncellemeyiBaslat() {
-        // Sadece bu iş için arka planda 1 adet işçi oluşturuyoruz
-        zamanlayici = Executors.newSingleThreadScheduledExecutor();
-
-        // İşçiye görevini ve süresini veriyoruz
-        zamanlayici.scheduleAtFixedRate(() -> {
-
-            // 1. ADIM: Arka planda Binance'e gidip fiyatları çek (UI donmaz)
-            portfoyService.piyasaFiyatlariniGuncelle();
-
-            // 2. ADIM: Fiyatlar geldiğinde, arayüzü güncellemek için ana UI Thread'e haber ver
-            Platform.runLater(() -> {
-                verileriYenile(); // Tablodaki rakamlar yenilenir
-            });
-
-        }, 0, 3, TimeUnit.SECONDS);
-        // 0: Hemen başla, 3: Her 3 saniyede bir tekrarla
-    }
-
-    // Kullanıcı pencereyi (X) çarpıdan kapattığında arka plandaki döngüyü tamamen durdur
+    // DEĞİŞEN DİĞER KISIM: Kapanırken servise "durdur" dedik.
     @Override
     public void stop() throws Exception {
         super.stop();
-        if (zamanlayici != null && !zamanlayici.isShutdown()) {
-            zamanlayici.shutdown();
-        }
+        portfoyService.otomatikGuncellemeyiDurdur();
     }
 
     public static void main(String[] args) {
