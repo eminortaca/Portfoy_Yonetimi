@@ -4,6 +4,7 @@ import com.emin.portfoy.models.Varlik;
 import com.emin.portfoy.repository.VarlikRepository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.concurrent.Executors;
@@ -16,7 +17,6 @@ public class PortfoyService {
     private final VarlikRepository varlikRepository;
     private ScheduledExecutorService zamanlayici;
 
-    // Bağımlılıkları (Dependencies) içeri alıyoruz
     public PortfoyService(VarlikRepository varlikRepository, KriptoServisi kriptoServisi) {
         this.varlikRepository = varlikRepository;
         this.kriptoServisi = kriptoServisi;
@@ -54,41 +54,47 @@ public class PortfoyService {
         return toplamDeger() - toplamMaliyet();
     }
 
-    // Canlı piyasa verilerini çekip hafızadaki varlıkları tazeleyen metot
+    // GÜNCELLENEN METOT: N+1 Problemi (Binance API Banlanma Riski) Çözüldü
     public void piyasaFiyatlariniGuncelle() {
-        // tumunuGetir() yerine findAll() kullanıyoruz
+        // 1. Önce Binance'ten TÜM piyasa verisini tek seferde sözlük (Map) olarak çek
+        Map<String, Double> canliFiyatlar = kriptoServisi.tumFiyatlariGetir();
+
+        if (canliFiyatlar.isEmpty()) {
+            LOGGER.warning("Fiyatlar Binance'ten alınamadı, güncelleme atlandı.");
+            return;
+        }
+
+        // 2. Veritabanındaki kendi varlıklarımızı çek
         List<Varlik> varliklar = varlikRepository.findAll();
 
+        // 3. Kendi varlıklarımızı Binance listesiyle eşleştir
         for (Varlik varlik : varliklar) {
-            // Şimdilik BTC ve ETH için Binance sorgusu atıyoruz
-            if (varlik.getSembol().equalsIgnoreCase("BTC") || varlik.getSembol().equalsIgnoreCase("ETH")) {
+            String sembol = varlik.getSembol().toUpperCase();
 
-                double canliFiyat = kriptoServisi.guncelFiyatGetir(varlik.getSembol());
+            // Sözlükte bizim coin var mı? (Sadece BTC ve ETH kısıtlaması kalktı!)
+            if (canliFiyatlar.containsKey(sembol)) {
+                double guncelFiyat = canliFiyatlar.get(sembol);
 
-                if (canliFiyat > 0.0) {
-                    varlik.setGuncelFiyat(canliFiyat);
-                    varlikRepository.guncelle(varlik);
-                    LOGGER.log(Level.INFO, "Piyasa fiyatı güncellendi ({0}): {1}", new Object[]{varlik.getSembol(), canliFiyat});
-                }
+                varlik.setGuncelFiyat(guncelFiyat);
+                varlikRepository.guncelle(varlik); // Veritabanını güncelle
+
+                LOGGER.log(Level.INFO, "Piyasa fiyatı güncellendi ({0}): {1}", new Object[]{sembol, guncelFiyat});
             }
         }
     }
-    // YENİ EKLENEN METOT: Arayüzden bu metoda bir "görev" (callback) gönderilecek
+
     public void otomatikGuncellemeyiBaslat(Runnable arayuzGuncellemeGorevi) {
         zamanlayici = Executors.newSingleThreadScheduledExecutor();
 
         zamanlayici.scheduleAtFixedRate(() -> {
-            // 1. Kendi işini yap (Fiyatları çek ve veritabanını güncelle)
             piyasaFiyatlariniGuncelle();
 
-            // 2. Arayüzün sana gönderdiği "ekran yenileme" görevini tetikle
             if (arayuzGuncellemeGorevi != null) {
                 arayuzGuncellemeGorevi.run();
             }
         }, 0, 3, TimeUnit.SECONDS);
     }
 
-    // YENİ EKLENEN METOT: Program kapanırken arka plan işçisini durdurmak için
     public void otomatikGuncellemeyiDurdur() {
         if (zamanlayici != null && !zamanlayici.isShutdown()) {
             zamanlayici.shutdown();

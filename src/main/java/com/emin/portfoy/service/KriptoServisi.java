@@ -1,11 +1,15 @@
 package com.emin.portfoy.service;
 
-import com.google.gson.JsonObject;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.HashMap;
+import java.util.Map;
 
 public class KriptoServisi {
 
@@ -13,11 +17,12 @@ public class KriptoServisi {
             .version(HttpClient.Version.HTTP_1_1) // yurtta internet sıkıntı olduğu için HTTP/1.1 kullanıyoruz
             .build();
 
-    public double guncelFiyatGetir(String sembol) {
+    // YENİ METOT: Tüm piyasayı tek bir hamlede çeker ve haritaya (Map) dönüştürür.
+    public Map<String, Double> tumFiyatlariGetir() {
+        Map<String, Double> fiyatHaritasi = new HashMap<>();
         try {
-            // Gelen sembolü Binance formatına çeviriyoruz (Örn: BTC -> BTCUSDT)
-            String pair = sembol.toUpperCase().endsWith("USDT") ? sembol.toUpperCase() : sembol.toUpperCase() + "USDT";
-            String url = "https://api.binance.com/api/v3/ticker/price?symbol=" + pair;
+            // URL'nin sonundan "?symbol=..." kısmını sildik. Artık tüm listeyi getirecek.
+            String url = "https://api.binance.com/api/v3/ticker/price";
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
@@ -27,14 +32,26 @@ public class KriptoServisi {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() == 200) {
-                JsonObject jsonNesnesi = JsonParser.parseString(response.body()).getAsJsonObject();
-                return jsonNesnesi.get("price").getAsDouble();
+                // Gelen veri artık tek bir obje değil, devasa bir dizi (Array)
+                JsonArray jsonDizisi = JsonParser.parseString(response.body()).getAsJsonArray();
+
+                for (JsonElement eleman : jsonDizisi) {
+                    String sembol = eleman.getAsJsonObject().get("symbol").getAsString();
+                    double fiyat = eleman.getAsJsonObject().get("price").getAsDouble();
+
+                    // Portföyünde "BTC" veya "ETH" yazıyor ama Binance "BTCUSDT" dönüyor.
+                    // Bu yüzden sadece sonu USDT ile bitenleri alıp, o "USDT" kısmını kesiyoruz.
+                    if (sembol.endsWith("USDT")) {
+                        String temizSembol = sembol.replace("USDT", "");
+                        fiyatHaritasi.put(temizSembol, fiyat);
+                    }
+                }
             } else {
                 System.out.println("API Hatası: " + response.statusCode());
             }
         } catch (Exception e) {
-            System.out.println("Fiyat çekilemedi (" + sembol + "): " + e.getMessage());
+            System.out.println("Toplu fiyat çekilemedi: " + e.getMessage());
         }
-        return 0.0;
+        return fiyatHaritasi;
     }
 }
