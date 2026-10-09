@@ -39,8 +39,6 @@ public class KriptoServisi {
                     String sembol = eleman.getAsJsonObject().get("symbol").getAsString();
                     double fiyat = eleman.getAsJsonObject().get("price").getAsDouble();
 
-                    // Portföyünde "BTC" veya "ETH" yazıyor ama Binance "BTCUSDT" dönüyor.
-                    // Bu yüzden sadece sonu USDT ile bitenleri alıp, o "USDT" kısmını kesiyoruz.
                     if (sembol.endsWith("USDT")) {
                         String temizSembol = sembol.replace("USDT", "");
                         fiyatHaritasi.put(temizSembol, fiyat);

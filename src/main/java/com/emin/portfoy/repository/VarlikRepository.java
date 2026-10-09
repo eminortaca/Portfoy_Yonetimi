@@ -9,8 +9,6 @@ import java.util.Optional;
 
 public class VarlikRepository {
 
-    // DB_URL ve baglantiAl() metodunu sildik, çünkü artık DatabaseManager kullanıyoruz.
-
     public VarlikRepository() {
         tabloOlustur();
     }
@@ -26,7 +24,6 @@ public class VarlikRepository {
             );
             """;
 
-        // Sadece Statement nesnesini try içine alıyoruz. Bağlantıyı DatabaseManager'dan istiyoruz.
         try (Statement stmt = DatabaseManager.getBaglanti().createStatement()) {
             stmt.execute(sql);
         } catch (SQLException e) {
@@ -34,7 +31,8 @@ public class VarlikRepository {
         }
     }
 
-    public void save(Varlik varlik) {
+    // YENİ: synchronized eklendi. Biri kaydederken diğeri bekleyecek.
+    public synchronized void save(Varlik varlik) {
         String sql = """
             INSERT INTO varliklar (sembol, miktar, ortalama_maliyet, guncel_fiyat)
             VALUES (?, ?, ?, ?)
@@ -55,11 +53,13 @@ public class VarlikRepository {
         }
     }
 
-    public void guncelle(Varlik varlik) {
+    // YENİ: synchronized eklendi.
+    public synchronized void guncelle(Varlik varlik) {
         save(varlik);
     }
 
-    public Optional<Varlik> findBySembol(String sembol) {
+    // YENİ: synchronized eklendi. Okuma yapılırken yazma yapılamaz.
+    public synchronized Optional<Varlik> findBySembol(String sembol) {
         String sql = "SELECT * FROM varliklar WHERE sembol = ?";
 
         try (PreparedStatement pstmt = DatabaseManager.getBaglanti().prepareStatement(sql)) {
@@ -82,7 +82,8 @@ public class VarlikRepository {
         return Optional.empty();
     }
 
-    public List<Varlik> findAll() {
+    // YENİ: synchronized eklendi.
+    public synchronized List<Varlik> findAll() {
         List<Varlik> liste = new ArrayList<>();
         String sql = "SELECT * FROM varliklar";
 
@@ -105,7 +106,8 @@ public class VarlikRepository {
         return liste;
     }
 
-    public void delete(String sembol) {
+    // YENİ: synchronized eklendi.
+    public synchronized void delete(String sembol) {
         String sql = "DELETE FROM varliklar WHERE sembol = ?";
 
         try (PreparedStatement pstmt = DatabaseManager.getBaglanti().prepareStatement(sql)) {
