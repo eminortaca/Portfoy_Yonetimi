@@ -17,6 +17,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 
 public class App extends Application {
 
@@ -25,6 +27,8 @@ public class App extends Application {
     private Label lblToplamMaliyet;
     private Label lblToplamDeger;
     private Label lblKarZarar;
+    private Circle durumNoktasi;
+    private Label lblDurumYazisi;
 
     @Override
     public void start(Stage primaryStage) {
@@ -37,6 +41,13 @@ public class App extends Application {
 
         HBox ozetPaneli = ozetPaneliOlustur();
 
+        // YENİ: Sol üstteki Canlı göstergesi (Nokta ve Yazı alt alta)
+        durumNoktasi = new Circle(5); // 5 piksel yarıçaplı nokta
+        lblDurumYazisi = new Label("Canlı");
+        VBox gostergePaneli = new VBox(3, durumNoktasi, lblDurumYazisi);
+        gostergePaneli.setAlignment(Pos.CENTER);
+        gostergePaneli.setPadding(new Insets(10, 0, 0, 10)); // Sadece sol ve üstten boşluk
+
         // Ekleme formunu oluşturuyoruz
         HBox eklemePaneli = eklemePaneliOlustur();
 
@@ -48,8 +59,13 @@ public class App extends Application {
         ustPanel.setPadding(new Insets(10));
         ustPanel.setAlignment(Pos.CENTER);
 
+        // Göstergeyi SOLA, Formu ORTAYA koyuyoruz
+        BorderPane ustAnaPanel = new BorderPane();
+        ustAnaPanel.setLeft(gostergePaneli);
+        ustAnaPanel.setCenter(ustPanel);
+
         BorderPane root = new BorderPane();
-        root.setTop(ustPanel);
+        root.setTop(ustAnaPanel);
         root.setCenter(tablo);
         root.setBottom(ozetPaneli);
 
@@ -193,6 +209,16 @@ public class App extends Application {
             lblKarZarar.setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
         } else {
             lblKarZarar.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+        }
+        // ... (verileriYenile metodunun en altı)
+        if (portfoyService.isSonGuncellemeBasarili()) {
+            durumNoktasi.setFill(Color.GREEN);
+            lblDurumYazisi.setText("Canlı");
+            lblDurumYazisi.setStyle("-fx-text-fill: green; -fx-font-weight: bold; -fx-font-size: 10px;");
+        } else {
+            durumNoktasi.setFill(Color.RED);
+            lblDurumYazisi.setText("Bağlantı Yok");
+            lblDurumYazisi.setStyle("-fx-text-fill: red; -fx-font-weight: bold; -fx-font-size: 10px;");
         }
     }
 
