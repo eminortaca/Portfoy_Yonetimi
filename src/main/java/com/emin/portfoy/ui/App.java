@@ -61,7 +61,6 @@ public class App extends Application {
 
         portfoyService.otomatikGuncellemeyiBaslat(() -> Platform.runLater(this::verileriYenile));
     }
-
     private HBox eklemePaneliOlustur() {
         TextField txtSembol = new TextField();
         txtSembol.setPromptText("Sembol (Örn: SOL)");
@@ -78,29 +77,47 @@ public class App extends Application {
         Button btnEkle = new Button("Varlık Ekle");
         btnEkle.setStyle("-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-weight: bold;");
 
+        Button btnSil = new Button("Seçili Olanı Sil");
+        btnSil.setStyle("-fx-background-color: #dc3545; -fx-text-fill: white; -fx-font-weight: bold;");
+
         btnEkle.setOnAction(e -> {
             try {
-                // 1. Arayüz sadece kutulardaki ham metni alır
-                String sembolTxt = txtSembol.getText();
-                String miktarTxt = txtMiktar.getText();
-                String maliyetTxt = txtMaliyet.getText();
-
-                // 2. Her şeyi (doğrulama, obje oluşturma) servise paslar
-                portfoyService.yeniVarlikIsleVeEkle(sembolTxt, miktarTxt, maliyetTxt);
-
-                // 3. Servis hata fırlatmazsa işlem başarılı demektir, kutuları temizle ve UI yenile
+                portfoyService.yeniVarlikIsleVeEkle(txtSembol.getText(), txtMiktar.getText(), txtMaliyet.getText());
                 txtSembol.clear();
                 txtMiktar.clear();
                 txtMaliyet.clear();
                 verileriYenile();
-
             } catch (IllegalArgumentException ex) {
-                // 4. Servis "Bu veri hatalı" derse, sadece servisin gönderdiği mesajı ekrana basar.
                 uyariGoster("İşlem Başarısız", ex.getMessage());
             }
         });
 
-        HBox hbox = new HBox(15, txtSembol, txtMiktar, txtMaliyet, btnEkle);
+        // YENİ: Silme İşlemi Olayı
+        btnSil.setOnAction(e -> {
+            // Tablodan seçili olan satırı al
+            Varlik seciliVarlik = tablo.getSelectionModel().getSelectedItem();
+
+            if (seciliVarlik == null) {
+                uyariGoster("Seçim Hatası", "Lütfen silmek için tablodan bir varlık seçin.");
+                return; // Seçili yoksa işlemi iptal et
+            }
+
+            // Yanlışlıkla silmelere karşı onay penceresi çıkart
+            Alert onay = new Alert(Alert.AlertType.CONFIRMATION);
+            onay.setTitle("Silme Onayı");
+            onay.setHeaderText(null);
+            onay.setContentText(seciliVarlik.getSembol() + " varlığını portföyden silmek istediğinize emin misiniz?");
+
+            onay.showAndWait().ifPresent(cevap -> {
+                if (cevap == ButtonType.OK) { // Kullanıcı Tamam'a basarsa
+                    portfoyService.varlikSil(seciliVarlik.getSembol());
+                    verileriYenile(); // Tabloyu yenile
+                }
+            });
+        });
+
+        // Butonların arasına biraz boşluk katmak için HBox'a btnSil'i de ekledik
+        HBox hbox = new HBox(15, txtSembol, txtMiktar, txtMaliyet, btnEkle, btnSil);
         hbox.setAlignment(Pos.CENTER);
         return hbox;
     }
@@ -152,8 +169,19 @@ public class App extends Application {
     }
 
     private void verileriYenile() {
+        Varlik oncekiSecili = tablo.getSelectionModel().getSelectedItem();
+        String seciliSembol = (oncekiSecili != null) ? oncekiSecili.getSembol() : null;
         ObservableList<Varlik> varlikListesi = FXCollections.observableArrayList(portfoyService.tumVarliklar());
         tablo.setItems(varlikListesi);
+
+        if (seciliSembol != null) {
+            for (Varlik v : varlikListesi) {
+                if (v.getSembol().equals(seciliSembol)) {
+                    tablo.getSelectionModel().select(v);
+                    break;
+                }
+            }
+        }
 
         lblToplamMaliyet.setText(String.format("Toplam Maliyet: %.2f", portfoyService.toplamMaliyet()));
         lblToplamDeger.setText(String.format("Toplam Değer: %.2f", portfoyService.toplamDeger()));

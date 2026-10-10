@@ -135,4 +135,11 @@ public class PortfoyService {
         // 6. Mevcut veritabanına kaydetme metodunu çağır
         varlikEkle(yeniVarlik);
     }
+    public void varlikSil(String sembol) {
+        if (sembol == null || sembol.trim().isEmpty()) {
+            throw new IllegalArgumentException("Silinecek sembol geçersiz.");
+        }
+        varlikRepository.delete(sembol.toUpperCase());
+        LOGGER.log(Level.INFO, "Varlık silindi: {0}", sembol);
+    }
 }
