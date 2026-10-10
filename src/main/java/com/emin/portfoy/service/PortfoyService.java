@@ -22,6 +22,9 @@ public class PortfoyService {
         this.kriptoServisi = kriptoServisi;
     }
 
+    private boolean sonGuncellemeBasarili = true;
+    public boolean isSonGuncellemeBasarili() { return sonGuncellemeBasarili; }
+
     public void varlikEkle(Varlik varlik) {
         varlikRepository.save(varlik);
         LOGGER.log(Level.INFO, "Varlık eklendi: {0}", varlik.getSembol());
@@ -49,7 +52,6 @@ public class PortfoyService {
                 .mapToDouble(Varlik::getToplamDeger)
                 .sum();
     }
-
     public double toplamKarZarar() {
         return toplamDeger() - toplamMaliyet();
     }
@@ -60,9 +62,12 @@ public class PortfoyService {
         Map<String, Double> canliFiyatlar = kriptoServisi.tumFiyatlariGetir();
 
         if (canliFiyatlar.isEmpty()) {
-            LOGGER.warning("Fiyatlar Binance'ten alınamadı, güncelleme atlandı.");
+            sonGuncellemeBasarili = false; // YENİ: Bağlantı koptu
+            LOGGER.warning("Fiyatlar alınamadı.");
             return;
         }
+
+        sonGuncellemeBasarili = true; // YENİ: Bağlantı var
 
         // 2. Veritabanındaki kendi varlıklarımızı çek
         List<Varlik> varliklar = varlikRepository.findAll();
