@@ -2,7 +2,6 @@ package com.emin.portfoy.models;
 
 public class Varlik {
 
-    private int id;
     private String sembol;
     private double miktar;
     private double ortalamaMaliyet;
@@ -17,18 +16,6 @@ public class Varlik {
         setOrtalamaMaliyet(ortalamaMaliyet);
         setGuncelFiyat(guncelFiyat);
     }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        if (id < 0) {
-            throw new IllegalArgumentException("id eksi olamaz");
-        }
-        this.id = id;
-    }
-
     public String getSembol() {
         return sembol;
     }

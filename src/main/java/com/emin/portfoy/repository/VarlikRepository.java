@@ -72,7 +72,6 @@ public class VarlikRepository {
                             rs.getDouble("ortalama_maliyet"),
                             rs.getDouble("guncel_fiyat")
                     );
-                    varlik.setId(rs.getInt("id"));
                     return Optional.of(varlik);
                 }
             }
@@ -97,7 +96,6 @@ public class VarlikRepository {
                         rs.getDouble("ortalama_maliyet"),
                         rs.getDouble("guncel_fiyat")
                 );
-                varlik.setId(rs.getInt("id"));
                 liste.add(varlik);
             }
         } catch (SQLException e) {
