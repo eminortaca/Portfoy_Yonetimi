@@ -100,4 +100,39 @@ public class PortfoyService {
             zamanlayici.shutdown();
         }
     }
+    // YENİ METOT: Arayüzden gelen ham metinleri işler, doğrular ve kaydeder
+    public void yeniVarlikIsleVeEkle(String sembol, String miktarStr, String maliyetStr) {
+        // 1. Boşluk kontrolü
+        if (sembol == null || sembol.trim().isEmpty()) {
+            throw new IllegalArgumentException("Sembol alanı boş bırakılamaz!");
+        }
+
+        String temizSembol = sembol.trim().toUpperCase();
+
+        // 2. Format düzeltmesi (Kullanıcı virgül girdiyse noktaya çevir)
+        if (miktarStr != null) miktarStr = miktarStr.replace(",", ".");
+        if (maliyetStr != null) maliyetStr = maliyetStr.replace(",", ".");
+
+        double miktar;
+        double maliyet;
+
+        // 3. Sayıya çevirme ve harf/yanlış karakter kontrolü
+        try {
+            miktar = Double.parseDouble(miktarStr != null && !miktarStr.trim().isEmpty() ? miktarStr : "0");
+            maliyet = Double.parseDouble(maliyetStr != null && !maliyetStr.trim().isEmpty() ? maliyetStr : "0");
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Lütfen miktar ve maliyet için geçerli bir sayı girin.");
+        }
+
+        // 4. Mantık kuralları (İş kuralı: Miktar 0 olamaz)
+        if (miktar <= 0 || maliyet < 0) {
+            throw new IllegalArgumentException("Miktar 0'dan büyük olmalı ve maliyet negatif olamaz.");
+        }
+
+        // 5. Her şey doğruysa Obje oluşturma (İşi arayüzden aldık)
+        Varlik yeniVarlik = new Varlik(temizSembol, miktar, maliyet, 0.0);
+
+        // 6. Mevcut veritabanına kaydetme metodunu çağır
+        varlikEkle(yeniVarlik);
+    }
 }
