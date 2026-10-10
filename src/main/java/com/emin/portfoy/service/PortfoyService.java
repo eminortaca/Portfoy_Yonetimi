@@ -105,7 +105,7 @@ public class PortfoyService {
             zamanlayici.shutdown();
         }
     }
-    // YENİ METOT: Arayüzden gelen ham metinleri işler, doğrular ve kaydeder
+    // GÜNCELLENEN METOT: Arayüzden gelen ham metinleri işler, doğrular ve kaydeder
     public void yeniVarlikIsleVeEkle(String sembol, String miktarStr, String maliyetStr) {
         // 1. Boşluk kontrolü
         if (sembol == null || sembol.trim().isEmpty()) {
@@ -128,16 +128,28 @@ public class PortfoyService {
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Lütfen miktar ve maliyet için geçerli bir sayı girin.");
         }
-
-        // 4. Mantık kuralları (İş kuralı: Miktar 0 olamaz)
+        // 4. Mantık kuralları (Miktar 0 olamaz)
         if (miktar <= 0 || maliyet < 0) {
             throw new IllegalArgumentException("Miktar 0'dan büyük olmalı ve maliyet negatif olamaz.");
         }
+        // 5. GERÇEKLİK KONTROLÜ
+        Map<String, Double> piyasaFiyatlari = kriptoServisi.tumFiyatlariGetir();
 
-        // 5. Her şey doğruysa Obje oluşturma (İşi arayüzden aldık)
-        Varlik yeniVarlik = new Varlik(temizSembol, miktar, maliyet, 0.0);
+        // Eğer o an internet yoksa doğrulama yapamayız, işlemi reddetmeliyiz
+        if (piyasaFiyatlari.isEmpty()) {
+            throw new IllegalArgumentException("Bağlantı hatası: İnternet koptuğu için coin doğrulaması yapılamıyor.");
+        }
 
-        // 6. Mevcut veritabanına kaydetme metodunu çağır
+        // Binance'in devasa listesinde bizim kullanıcının yazdığı coin var mı?
+        if (!piyasaFiyatlari.containsKey(temizSembol)) {
+            throw new IllegalArgumentException("Hata: borsada '" + temizSembol + "' adında bir coin bulunamadı!");
+        }
+        // Madem tüm fiyat listesini çektik ve coin'i bulduk,
+        // veritabanına 0.0 yerine doğrudan güncel fiyatıyla kaydedelim.
+        double gercekFiyat = piyasaFiyatlari.get(temizSembol);
+
+        // 6. Her şey kusursuzsa Obje oluşturma ve kaydetme
+        Varlik yeniVarlik = new Varlik(temizSembol, miktar, maliyet, gercekFiyat);
         varlikEkle(yeniVarlik);
     }
     public void varlikSil(String sembol) {
