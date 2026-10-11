@@ -53,7 +53,6 @@ public class VarlikRepository {
         }
     }
 
-    // YENİ: synchronized eklendi.
     public synchronized void guncelle(Varlik varlik) {
         save(varlik);
     }
